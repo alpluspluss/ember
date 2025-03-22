@@ -9,8 +9,10 @@ There isn't much about ember yet as it is a *very new* project and will likely t
 amount of time and effort into creating it. Therefore, please do not expect all the components in this project to be
 completed.
 
+- Aarch64 backend covered around 70% of AArch64 instructions with extensions.
+
 As of the time I am writing this, I am designing the language semantics and syntax in which can be read
-[here](https://github.com/alpluspluss/ember/tree/main/ash/docs) in order to understand design decisions on the language.
+[here](https://github.com/alpluspluss/ember/tree/main/docs/ash-man.md) in order to understand design decisions on the language.
 As for the code optimization and object file
 generation, [sparkle](https://github.com/alpluspluss/ember/tree/main/sparkle)
 , alongside its subsystems (will) handles all of these operations.
