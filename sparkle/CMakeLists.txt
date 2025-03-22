@@ -1,0 +1,2 @@
+project(sparkle LANGUAGES CXX)
+
