@@ -46,9 +46,10 @@ var arr: i32[] = { 1, 2, 3 }; /* an array of i32 */
 | `void`                    | Represents no value                                  |
 | `null`                    | Is optional or does not exist                        |
 | `T[]`                     | Array of elements of type T                          |
-| `ref<T>`                  | Reference to type T                                  |
-| `own<T>`                  | Owned pointer to type T                              |
-| `share<T>`                | Shared pointer to type T                             |
+| `ref[T]`                  | Reference to type T                                  |
+| `own[T]`                  | Owned pointer to type T                              |
+| `share[T]`                | Shared pointer to type T                             |
+| `pin[T]`                  | Read-only shared pointer to type T                   |
 
 All types are NOT atomic (thread safe) unless explicitly state so.
 
@@ -57,13 +58,13 @@ All types are NOT atomic (thread safe) unless explicitly state so.
 Ash uses a memory ownership model akin to C++'s smart pointers. However, users are able to use
 raw pointers and raw references if truly-unsafe operations are needed to be done.
 
-- `own<T>`: An owned pointer | `std::unique_ptr<T>` in C++
-- `share<T>`: A non-atomic shared pointer | `std::shared_ptr<T>` in C++
-- `ref<T>: A non-owning reference; doesn't affect ownership
+- `own[T]`: An owned pointer | `std::unique_ptr<T>` in C++
+- `share[T]`: A non-atomic shared pointer | `std::shared_ptr<T>` in C++
+- `ref[T]`: A non-owning reference; doesn't affect ownership
 - `*T`: A raw pointer; this is not recommended to use unless absolute neccessary due to the syntax being ambiguous about ownership.
-- `&T`: A raw reference and an alias of `ref<T>`. It is present in the language for consistency with the raw pointer.
+- `&T`: A raw reference and an alias of `ref[T]`. It is present in the language for consistency with the raw pointer.
 
-Pointer types except `*T`, `ref<T>` (extended to `&T`) are depended on the language runtime.
+Pointer types except `*T`, `ref[T]` (extended to `&T`) are depended on the language runtime.
 
 ### Control Flow
 
@@ -208,10 +209,10 @@ There are many type casting methods.
 
 | Method                  | Description                                                                                                                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| cast<T>                 | Determined by the compiler                                                                                                            |
-| truncate_cast<T>        | Indicates that the cast will reduce the precision. This can be done only on numberic types.                                           |
-| reinterpret_cast<T>     | Turns a type to another without any conversion rule. This cast should be used carefully as it can change alignment of data e.g. SIMD. |
-| static_cast<T>          | Explicitly converts a value from one data type to another.                                                                            |
+| cast[T]                 | Determined by the compiler                                                                                                            |
+| truncate_cast[T]        | Indicates that the cast will reduce the precision. This can be done only on numberic types.                                           |
+| reinterpret_cast[T]     | Turns a type to another without any conversion rule. This cast should be used carefully as it can change alignment of data e.g. SIMD. |
+| static_cast[T]          | Explicitly converts a value from one data type to another.                                                                            |
 
 
 When casting, it is important to remember the conversion rule. Ash's conversion rule is the same as C & C++'s.
