@@ -5,13 +5,14 @@ frontend and backend for my language, "ash", as well as utility tools and the st
 
 ## Status
 
-There isn't much about ember yet as it is a *very new* project and will likely take a substantial 
+There isn't much about ember yet as it is a *very new* project and will likely take a substantial
 amount of time and effort into creating it. Therefore, please do not expect all the components in this project to be
 completed.
 
-As of the time I am writing this, I am designing the language semantics and syntax in which can be read 
-[here](https://github.com/alpluspluss/ember/tree/main/ash/docs) in order to understand design decisions on the language. 
-As for the code optimization and object file generation, [sparkle](https://github.com/alpluspluss/ember/tree/main/sparkle)
-, alongside its subsystems (will) handles all of these operations. 
+As of the time I am writing this, I am designing the language semantics and syntax in which can be read
+[here](https://github.com/alpluspluss/ember/tree/main/ash/docs) in order to understand design decisions on the language.
+As for the code optimization and object file
+generation, [sparkle](https://github.com/alpluspluss/ember/tree/main/sparkle)
+, alongside its subsystems (will) handles all of these operations.
 
 You can check the status of each sub-project in their respective directory, `dir/STATUS.md`.
