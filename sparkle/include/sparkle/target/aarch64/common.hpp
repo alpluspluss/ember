@@ -5,16 +5,6 @@
 namespace sprk::aarch64
 {
     bool encode_logical_imm(uint64_t imm, bool is64bit, uint32_t* N, uint32_t* immr, uint32_t* imms);
-
-    bool is_pattern_repeating(uint64_t imm, int e);
-
-    bool find_s_r(uint64_t pattern, int e, int* s, int* r);
-
-    int ctones(uint64_t value);
-
-    uint64_t reconstruct_imm(int r, int s, int e);
-    
-    int log2(int n);
 }
 
 #define SHIFT_LSL 0
