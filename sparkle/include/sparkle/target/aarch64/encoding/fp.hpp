@@ -6,7 +6,6 @@ namespace sprk::aarch64
 {
     uint32_t encode_fcmp(int rn, int rm, uint32_t size);
     uint32_t encode_fcmp_zero(int rn, uint32_t size);
-    uint32_t encode_fmov_imm(int rd, float imm, uint32_t size);
     uint32_t encode_fcvt_to_int(int rd, int rn, bool is_signed, bool is64bit, uint32_t rounding, uint32_t size);
     uint32_t encode_fcvt_from_int(int rd, int rn, bool is_signed, bool is64bit, uint32_t size);
     uint32_t encode_fabs(int rd, int rn, uint32_t size);

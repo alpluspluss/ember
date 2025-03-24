@@ -67,11 +67,6 @@ namespace sprk::aarch64
 		       (0b000);             /* fixed bits */
 	}
 
-	uint32_t encode_fmov_imm(const int rd, float imm, const uint32_t size)
-	{
-		return 0; /* not implemented! */
-	}
-
 	uint32_t encode_fcvt_to_int(const int rd, int rn, bool is_signed, bool is64bit, uint32_t rounding, uint32_t size)
 	{
 		const uint32_t sf = is64bit ? 1 : 0; /* 64-bit (1) or 32-bit (0) integer result */

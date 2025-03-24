@@ -16,6 +16,9 @@
 #include <sparkle/target/aarch64/common.hpp>
 #include <sparkle/target/aarch64/encoding/fp.hpp>
 #include <sparkle/target/aarch64/encoding/simd.hpp>
+#include <sparkle/target/aarch64/encoding/conditional.hpp>
+#include <sparkle/target/aarch64/encoding/mul.hpp>
+#include <sparkle/target/aarch64/encoding/bitmanip.hpp>
 
 using namespace sprk::aarch64;
 
@@ -88,12 +91,16 @@ void test_atomic()
     instructions.push_back(encode_stlxr(6, 7, 8, 2));
     instructions.push_back(encode_stlxr(9, 10, 11, 3));
 
-    /* CAS */
-    /** FIXME */
-    instructions.push_back(encode_cas(0, 1, 2, 0, false, false));
-    instructions.push_back(encode_cas(3, 4, 5, 1, true, false));
-    instructions.push_back(encode_cas(6, 7, 8, 2, false, true));
-    instructions.push_back(encode_cas(9, 10, 11, 3, true, true));
+    /* CAS - only supports word (32-bit) & doubleword (64-bit) */
+    instructions.push_back(encode_cas(6, 7, 8, 2, false, false)); /* CAS */
+    instructions.push_back(encode_cas(6, 7, 8, 2, true, false)); /* CASA */
+    instructions.push_back(encode_cas(6, 7, 8, 2, false, true)); /* CASL */
+    instructions.push_back(encode_cas(6, 7, 8, 2, true, true)); /* CASAL */
+
+    instructions.push_back(encode_cas(9, 10, 11, 3, false, false)); /* CAS */
+    instructions.push_back(encode_cas(9, 10, 11, 3, true, false)); /* CASA */
+    instructions.push_back(encode_cas(9, 10, 11, 3, false, true)); /* CASL */
+    instructions.push_back(encode_cas(9, 10, 11, 3, true, true)); /* CASAL */
 
     /* atomic add */
     instructions.push_back(encode_ldadd(0, 1, 2, 0, false, false));
@@ -294,15 +301,19 @@ void test_logical()
     instructions.push_back(encode_eon_reg(3, 4, 5, 2, 16, true));
     
     /* the immediate may or may not match which is expected as the imm used can be invalid */
-    /* 0xFF & 0xFF00 are common values that should get compiled */
-    instructions.push_back(encode_and_imm(0, 1, 0xFF, false, false)); 
-    instructions.push_back(encode_and_imm(2, 3, 0xFF00, true, true)); 
+    /* some test values are taken from: https://gist.github.com/dinfuehr/51a01ac58c0b23e4de9aac313ed6a06a */
+    instructions.push_back(encode_and_imm(0, 1, 0x5555555555555555, true, false)); /* alternating 0101 */
+    instructions.push_back(encode_and_imm(2, 3, 0xAAAAAAAAAAAAAAAA, true, true));   /* alternating 1010 */
     
-    instructions.push_back(encode_orr_imm(0, 1, 0xFF, false));
-    instructions.push_back(encode_orr_imm(2, 3, 0xFF00, true));
+    instructions.push_back(encode_orr_imm(0, 1, 0x3333333333333333, false));
+    instructions.push_back(encode_orr_imm(2, 3, 0xCCCCCCCCCCCCCCCC, true)); /* repeating 1100 */
     
-    instructions.push_back(encode_eor_imm(0, 1, 0xFF, false));
-    instructions.push_back(encode_eor_imm(2, 3, 0xFF00, true));
+    instructions.push_back(encode_eor_imm(0, 1, 0x0F0F0F0F0F0F0F0F, false)); /* repeating 00001111 */
+    instructions.push_back(encode_eor_imm(2, 3, 0xF0F0F0F0F0F0F0F0, true)); 
+
+    /* some original values i computed */
+    instructions.push_back(encode_and_imm(4, 5, 0x3F, false, false));  /* 0b111111 */
+    instructions.push_back(encode_orr_imm(4, 5, 0xF0, false)); /* 0xF0 = 0b11110000 */
 
     write_binary_file("logical_test.bin", instructions);
 }
@@ -602,18 +613,69 @@ void test_simd()
     instructions.push_back(encode_dup_gen(8, 9, SIMD_2S));
     instructions.push_back(encode_dup_gen(10, 11, SIMD_4S));
     instructions.push_back(encode_dup_gen(12, 13, SIMD_2D));
-    
-    instructions.push_back(encode_ins(0, 1, 0, 1, SIMD_8B));
-    instructions.push_back(encode_ins(2, 3, 2, 3, SIMD_16B));
-    instructions.push_back(encode_ins(4, 5, 0, 1, SIMD_4H));
-    instructions.push_back(encode_ins(6, 7, 0, 1, SIMD_8H));
-    
-    instructions.push_back(encode_umov(0, 1, 0, 0));
-    instructions.push_back(encode_umov(2, 3, 1, 1));
-    instructions.push_back(encode_umov(4, 5, 2, 2));
-    instructions.push_back(encode_umov(6, 7, 0, 3));
 
     write_binary_file("simd_test.bin", instructions);
+}
+
+void test_cond()
+{
+    std::vector<uint32_t> instructions;
+    
+    /* cond select */
+    instructions.push_back(encode_csel(0, 1, 2, 0x0, true));
+    instructions.push_back(encode_csel(3, 4, 5, 0xB, false));
+    instructions.push_back(encode_csinc(6, 7, 8, 0x1, true));
+    instructions.push_back(encode_csinv(9, 10, 11, 0x2, false));
+    instructions.push_back(encode_csneg(12, 13, 14, 0x3, true));
+    
+    /* pseudo-instructions */
+    instructions.push_back(encode_cinc(15, 16, 0x4, true));
+    instructions.push_back(encode_cinv(17, 18, 0x5, false));
+    instructions.push_back(encode_cneg(19, 20, 0x6, true));
+    instructions.push_back(encode_cset(21, 0x7, false));
+    instructions.push_back(encode_csetm(22, 0x8, true));
+
+    write_binary_file("cond_test.bin", instructions);
+}
+
+void test_mul()
+{
+    std::vector<uint32_t> instructions;
+    
+    /* mul accumulate */
+    instructions.push_back(encode_mul(0, 1, 2, true));
+    instructions.push_back(encode_mul(3, 4, 5, false));
+    instructions.push_back(encode_madd(6, 7, 8, 9, true));
+    instructions.push_back(encode_madd(10, 11, 12, 13, false));
+    instructions.push_back(encode_msub(14, 15, 16, 17, true));
+    instructions.push_back(encode_mneg(18, 19, 20, false));
+    
+    /* long mul */
+    instructions.push_back(encode_smaddl(21, 22, 23, 24));
+    instructions.push_back(encode_smsubl(25, 26, 27, 28));
+    instructions.push_back(encode_smull(29, 0, 1));
+    instructions.push_back(encode_smnegl(2, 3, 4));
+    instructions.push_back(encode_umaddl(5, 6, 7, 8));
+    instructions.push_back(encode_umsubl(9, 10, 11, 12));
+    instructions.push_back(encode_umull(13, 14, 15));
+    instructions.push_back(encode_umnegl(16, 17, 18));
+
+    write_binary_file("mul_test.bin", instructions);
+}
+
+void test_bitmanip()
+{
+    std::vector<uint32_t> instructions;
+    
+    instructions.push_back(encode_rbit(0, 1, true));
+    instructions.push_back(encode_rbit(2, 3, false)); 
+    instructions.push_back(encode_rev16(4, 5, true)); 
+    instructions.push_back(encode_rev16(6, 7, false));
+    instructions.push_back(encode_rev32(8, 9, true));
+    instructions.push_back(encode_rev(10, 11, true));
+    instructions.push_back(encode_rev(12, 13, false));
+
+    write_binary_file("bitmanip_test.bin", instructions);
 }
 
 int main()
@@ -630,5 +692,8 @@ int main()
     test_system();
     test_fp();
     test_simd();
+    test_bitmanip();
+    test_cond();
+    test_mul();
 	return 0;
 }
