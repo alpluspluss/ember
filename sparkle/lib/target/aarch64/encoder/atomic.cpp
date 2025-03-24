@@ -70,26 +70,25 @@ namespace sprk::aarch64
 		       rt;                /* source register */
 	}
 
-	/** FIXME */
-	uint32_t encode_cas(const int rs, const int rt, int rn, const uint32_t size, const bool acquire, const bool release)
+	uint32_t encode_cas(const int rs, const int rt, const int rn, const uint32_t size, const bool acquire, const bool release)
 	{
-		/* size: 0=byte, 1=halfword, 2=word, 3=doubleword */
-		constexpr uint32_t L = 1;         /* L=1 for CAS (load-like behavior) */
-		uint32_t A = acquire ? 1 : 0; /* A=1 for acquire semantics */
-		uint32_t R = release ? 1 : 0; /* R=1 for release semantics */
-		constexpr uint32_t o0 = 1;    /* o0=1 for CAS */
+		/* size: 2=word, 3=doubleword only - byte & halfword not supported */
+		/* see: https://developer.arm.com/documentation/ddi0602/2024-12/Base-Instructions/CAS--CASA--CASAL--CASL--Compare-and-swap-word-or-doubleword-in-memory-?lang=en */
+		if (size != 2 && size != 3) 
+			return 0;
+		
+		const uint32_t L = acquire ? 1 : 0;  /* L=1 for acquire semantics */
+		const uint32_t o0 = release ? 1 : 0; /* o0=1 for release semantics */
 
 		return (size << 30) |      /* size field */
-			(0b0010001 << 23) | /* opcode fixed pattern */
-			(L << 22) |         /* L bit */
-			(1 << 21) |         /* fixed bit */
-			(rs << 16) |        /* expected value register */
-			(o0 << 15) |        /* o0 bit for CAS */
-			(A << 14) |         /* A bit for acquire semantics */
-			(R << 13) |         /* R bit for release semantics */
-			(0b11111 << 10) |   /* Rt2=11111 for CAS */
-			(rn << 5) |         /* base register */
-			rt;                 /* target/result register */
+			(0b0010001 << 23) |    /* opcode fixed pattern */
+			(L << 22) |            /* L bit for acquire */
+			(1 << 21) |            /* */
+			(rs << 16) |           /* Rs register (expected value) */
+			(o0 << 15) |           /* o0 bit for release semantics */
+			(0b11111 << 10) |      /* Rt2=11111 for CAS */
+			(rn << 5) |            /* Rn register (memory address) */
+			rt;                    /* Rt register (new/result value) */
 	}
 
 	uint32_t encode_ldadd(const int rs, const int rt, const int rn, const uint32_t size, const bool acquire, const bool release)
