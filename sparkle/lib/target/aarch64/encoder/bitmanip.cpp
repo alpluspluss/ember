@@ -50,9 +50,9 @@ namespace sprk::aarch64
     
     uint32_t encode_rev(const int rd, const int rn, const bool is64bit)
     {
-        /* REV - Reverse bytes:
-           - For 32-bit (sf=0): reverses bytes in the entire 32-bit word
-           - For 64-bit (sf=1): reverses bytes in the entire 64-bit doubleword (REV64 alias) */
+        /* REV - reverse bytes:
+           - for 32-bit (sf=0): reverses bytes in the entire 32-bit word
+           - for 64-bit (sf=1): reverses bytes in the entire 64-bit doubleword (REV64 alias) */
            
         const uint32_t sf = is64bit ? 1 : 0;    /* 64-bit (1) or 32-bit (0) */
         const uint32_t opc = is64bit ? 3 : 2;   /* opc = 2 for 32-bit REV, 3 for 64-bit REV */
