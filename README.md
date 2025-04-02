@@ -17,4 +17,4 @@ As for the code optimization and object file
 generation, [sparkle](https://github.com/alpluspluss/ember/tree/main/sparkle)
 , alongside its subsystems (will) handles all of these operations.
 
-You can check the status of each sub-project in their respective directory, `dir/STATUS.md`.
+You can check the status of each sub-project in their respective directory, `$(dir)/STATUS.md`.
