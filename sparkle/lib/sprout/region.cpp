@@ -14,6 +14,18 @@ namespace sprk
 		child->region_depth = region_depth + 1;
 	}
 
+	void SproutRegion::remove_child(const std::shared_ptr<SproutRegion> &child)
+	{
+		auto it = std::find(children.begin(), children.end(), child);
+		if (it != children.end())
+			children.erase(it);
+	}
+
+	void SproutRegion::replace_nodes(std::vector<NodeRef> new_nodes)
+	{
+		nodes = std::move(new_nodes);
+	}
+
 	void SproutRegion::set_ctrl_deps(const NodeRef control)
 	{
 		ctrl_dep = control;

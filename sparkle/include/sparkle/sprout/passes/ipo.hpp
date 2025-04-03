@@ -35,6 +35,7 @@ namespace sprk
 	private:
 		IPOResult ipo_results;
 		std::map<NodeRef, NodeRef> orig_to_clone;
+		std::set<NodeRef> functions_to_remove;
 		std::shared_ptr<IPAPass> ipa_pass;
 		NodeRef next_node_id = {}; /* here to track next node id for cloning */
 
@@ -44,19 +45,22 @@ namespace sprk
 		/* propagate constant */
 		void prop_constant(std::vector<std::unique_ptr<SproutNode<> > > &nodes);
 
-		std::shared_ptr<SproutRegion> clone_region(std::shared_ptr<SproutRegion> src_region,
-		                                           std::shared_ptr<SproutRegion> dest_parent,
+		std::shared_ptr<SproutRegion> clone_region(const std::shared_ptr<SproutRegion>& src_region,
+		                                           const std::shared_ptr<SproutRegion>& dest_parent,
 		                                           std::vector<std::unique_ptr<SproutNode<> > > &nodes);
 
 		void connect_inlined_nodes(std::vector<std::unique_ptr<SproutNode<> > > &nodes);
 
 		void map_params_to_args(NodeRef callee,
 		                        NodeRef call_site,
-		                        std::vector<std::unique_ptr<SproutNode<> > > &nodes,
+		                        const std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 		                        std::map<NodeRef, NodeRef> &param_to_arg);
 
 		void replace_call_with_inlined(NodeRef call_site,
 		                               NodeRef inlined_return,
 		                               std::vector<std::unique_ptr<SproutNode<> > > &nodes);
+
+		void remove_dead_functions(const std::shared_ptr<SproutRegion> &root,
+								  std::vector<std::unique_ptr<SproutNode<>>> &nodes);
 	};
 }

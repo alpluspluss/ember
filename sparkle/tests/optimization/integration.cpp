@@ -1,9 +1,8 @@
 #include <iostream>
+#include <sparkle/sprout/passes/dce.hpp>
 #include <sparkle/sprout/passes/ipa.hpp>
 #include <sparkle/sprout/passes/ipo.hpp>
-#include <sparkle/sprout/passes/dce.hpp>
 #include <sparkle/sprout/passes/pre.hpp>
-#include <sparkle/sprout/passes/aa.hpp>
 #include <sparkle/sprout/utils/dump.hpp>
 
 using namespace sprk;
@@ -173,7 +172,7 @@ void test_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 int main()
 {
 	std::vector<std::unique_ptr<SproutNode<> > > nodes;
-	const auto root = std::make_shared<SproutRegion>("root");
+	auto root = std::make_shared<SproutRegion>("root");
 	root->set_type(RegionType::ROOT);
 
 	test_ir(nodes, root);
@@ -182,11 +181,13 @@ int main()
 	dump_ir(root, nodes);
 
 	DCEPass dce1;
-	dce1.run(root, nodes);
+	dce1.run(root, nodes); /* analyze */
+	dce1.dump_results(dce1.get_dead_nodes(), nodes, root);
+	dce1.remove_dead_nodes(root, nodes);
 
 	std::cout << "\n";
 
-	auto ipa = std::make_shared<IPAPass>();
+	const auto ipa = std::make_shared<IPAPass>();
 	ipa->run(root, nodes);
 
 	std::cout << "\nIPA result:\n";
@@ -201,9 +202,11 @@ int main()
 
 	DCEPass dce2;
 	dce2.run(root, nodes);
-
-	std::cout << "\nafter cleanup:\n";
 	dce2.dump_results(dce2.get_dead_nodes(), nodes, root);
+	dce2.remove_dead_nodes(root, nodes);
+
+	std::cout << "\nfinal IR:\n";
+	dump_ir(root, nodes);
 
 	return 0;
 }

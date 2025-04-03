@@ -80,6 +80,7 @@ namespace sprk
                     continue;
 
                 std::vector<NodeRef> users;
+                users.reserve(node->user_count);
                 for (uint8_t i = 0; i < node->user_count; i++)
                     users.push_back(node->users[i]);
 
@@ -144,7 +145,7 @@ namespace sprk
             return 0;
 
         /* dumn hash algorithm but should work */
-        ExprHash hash = static_cast<ExprHash>(node->type);
+        auto hash = static_cast<ExprHash>(node->type);
         if (node->type == NodeType::CONST)
         {
             if (std::holds_alternative<int64_t>(node->value))

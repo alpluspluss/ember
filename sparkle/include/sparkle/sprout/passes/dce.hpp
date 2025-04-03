@@ -23,6 +23,8 @@ namespace sprk
 			return alive_nodes;
 		}
 
+		void remove_dead_nodes(std::shared_ptr<SproutRegion> &root, std::vector<std::unique_ptr<SproutNode<>>> &nodes);
+
 		void dump_results(const std::set<NodeRef> &dead_nodes,
 		                  const std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 		                  const std::shared_ptr<SproutRegion> &root,

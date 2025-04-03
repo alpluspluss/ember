@@ -61,6 +61,69 @@ namespace sprk
 		}
 	}
 
+	void DCEPass::remove_dead_nodes(std::shared_ptr<SproutRegion> &root,
+	                                std::vector<std::unique_ptr<SproutNode<> > > &nodes)
+	{
+		if (dead_nodes.empty())
+			return;
+
+		/* disconnect */
+		for (const NodeRef dead_ref: dead_nodes)
+		{
+			if (dead_ref >= nodes.size() || !nodes[dead_ref])
+				continue;
+
+			for (uint8_t i = 0; i < nodes[dead_ref]->input_count; i++)
+			{
+				NodeRef input_ref = nodes[dead_ref]->inputs[i];
+				if (input_ref >= nodes.size() || !nodes[input_ref])
+					continue;
+
+				auto *input_node = nodes[input_ref].get();
+				for (uint8_t j = 0; j < input_node->user_count; j++)
+				{
+					if (input_node->users[j] == dead_ref)
+					{
+						/* if it's not the last user, shift the array */
+						if (j < input_node->user_count - 1)
+						{
+							for (uint8_t k = j; k < input_node->user_count - 1; k++)
+								input_node->users[k] = input_node->users[k + 1];
+						}
+						input_node->user_count--;
+						break;
+					}
+				}
+			}
+		}
+
+		std::function<void(std::shared_ptr<SproutRegion> &)> clean_region =
+				[&](const std::shared_ptr<SproutRegion> &region)
+		{
+			if (!region)
+				return;
+
+			std::vector<NodeRef> live_nodes;
+			for (NodeRef node_ref: region->get_nodes())
+			{
+				if (dead_nodes.find(node_ref) == dead_nodes.end())
+					live_nodes.push_back(node_ref);
+			}
+
+
+			region->replace_nodes(std::move(live_nodes));
+			for (auto child: region->get_children()) /* `get_children()` already returns references */
+				clean_region(child);
+		};
+
+		clean_region(root);
+		for (const NodeRef dead_ref: dead_nodes)
+		{
+			if (dead_ref < nodes.size() && nodes[dead_ref])
+				nodes[dead_ref].reset(); /* free mem */
+		}
+	}
+
 	void DCEPass::dump_results(const std::set<NodeRef> &dead_nodes,
 	                           const std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	                           const std::shared_ptr<SproutRegion> &root,
@@ -179,6 +242,4 @@ namespace sprk
 
 		dump_region(root, 0);
 	}
-
-
 }

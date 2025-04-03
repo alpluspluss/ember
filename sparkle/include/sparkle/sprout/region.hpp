@@ -34,6 +34,10 @@ namespace sprk
 
         void add_child(const std::shared_ptr<SproutRegion>& child);
 
+        void remove_child(const std::shared_ptr<SproutRegion>& child);
+
+        void replace_nodes(std::vector<NodeRef> new_nodes);
+
         void set_ctrl_deps(NodeRef control);
 
         void set_imm_dominator(const std::shared_ptr<SproutRegion> &dom);
@@ -55,12 +59,12 @@ namespace sprk
             return children; 
         }
 
-        std::shared_ptr<SproutRegion> getParent() const 
+        std::shared_ptr<SproutRegion> get_parent() const
         { 
             return parent.lock(); 
         }
 
-        NodeRef getControlDependency() const 
+        NodeRef get_ctrl_dep() const
         {
             return ctrl_dep; 
         }
