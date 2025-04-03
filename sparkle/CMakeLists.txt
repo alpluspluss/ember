@@ -5,7 +5,9 @@ add_library(sparkle
         lib/sprout/passes/aa.cpp
         lib/sprout/passes/dce.cpp
         lib/sprout/passes/ipa.cpp
+        lib/sprout/passes/ipo.cpp
         lib/sprout/utils/dump.cpp
+        lib/sprout/utils/irutils.cpp
 
         # aarch64 codegen backend
         lib/target/aarch64/common.cpp
@@ -96,5 +98,18 @@ target_include_directories(SparkleIPA PRIVATE
 )
 
 target_link_libraries(SparkleIPA PRIVATE
+        sparkle
+)
+
+### inter-procedural optimization
+add_executable(SparkleIPO
+        tests/optimization/ipo.cpp
+)
+
+target_include_directories(SparkleIPO PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleIPO PRIVATE
         sparkle
 )
