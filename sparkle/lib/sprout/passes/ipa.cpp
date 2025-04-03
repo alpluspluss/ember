@@ -190,17 +190,17 @@ namespace sprk
 		{
 			std::cout << "  function #" << function
 					  << " param #" << param
-					  << " constatn #" << const_val << std::endl;
+					  << " constant #" << const_val << std::endl;
 		}
 
 		/* inlining opp */
-		std::cout << blue << "\ninlining Opportunities:" << reset << std::endl;
+		std::cout << blue << "\ninlining opportunities:" << reset << std::endl;
 		for (const auto&[caller, callee, call_site, benefit, is_recursive] : ipa_results.inline_opps)
 		{
-			std::cout << "  Inline Function #" << callee
-					  << " into Function #" << caller
-					  << " at Call Site #" << call_site
-					  << " (Benefit: " << benefit << ")"
+			std::cout << "  Inline function #" << callee
+					  << " into function #" << caller
+					  << " at call site #" << call_site
+					  << " (benefit: " << benefit << ")"
 					  << (is_recursive ? " [RECURSIVE]" : "")
 					  << std::endl;
 		}

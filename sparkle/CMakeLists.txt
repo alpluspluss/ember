@@ -127,3 +127,16 @@ target_include_directories(SparklePRE PRIVATE
 target_link_libraries(SparklePRE PRIVATE
         sparkle
 )
+
+## integration test optimization (all)
+add_executable(SparkleIRTest
+        tests/optimization/integration.cpp
+)
+
+target_include_directories(SparkleIRTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleIRTest PRIVATE
+        sparkle
+)
