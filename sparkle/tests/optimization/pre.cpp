@@ -62,34 +62,28 @@ void pre_test_ir(std::vector<std::unique_ptr<SproutNode<>>> &nodes,
     entry_region->set_type(RegionType::BASIC_BLOCK);
     function_region->add_child(entry_region);
 
-    // Create if-condition region
     auto if_condition_region = std::make_shared<SproutRegion>("if_condition");
     if_condition_region->set_type(RegionType::BASIC_BLOCK);
     function_region->add_child(if_condition_region);
 
-    // Create then-branch region
     auto then_region = std::make_shared<SproutRegion>("then_branch");
     then_region->set_type(RegionType::BRANCH_THEN);
     function_region->add_child(then_region);
 
-    // Create else-branch region
     auto else_region = std::make_shared<SproutRegion>("else_branch");
     else_region->set_type(RegionType::BRANCH_ELSE);
     function_region->add_child(else_region);
 
-    // Create exit region
     auto exit_region = std::make_shared<SproutRegion>("exit");
     exit_region->set_type(RegionType::BASIC_BLOCK);
     function_region->add_child(exit_region);
 
-    // Set up dominance relationships
     entry_region->set_imm_dominator(function_region);
     if_condition_region->set_imm_dominator(entry_region);
     then_region->set_imm_dominator(if_condition_region);
     else_region->set_imm_dominator(if_condition_region);
     exit_region->set_imm_dominator(if_condition_region);
 
-    // Create function node
     NodeRef function_node = make_node(nodes, NodeType::FUNCTION, "test_function");
     function_region->add_node(function_node);
 
@@ -178,12 +172,9 @@ int main()
     DCEPass dce;
     dce.run(root, nodes);
 
-    std::cout << "\ndce result:\n";
+    std::cout << "\nfinal result:\n";
     dce.dump_results(dce.get_dead_nodes(), nodes, root, true);
     std::cout << "\n";
-
-    std::cout << "\nfinal ir:\n";
-    dump_ir(root, nodes);
 
     return 0;
 }
