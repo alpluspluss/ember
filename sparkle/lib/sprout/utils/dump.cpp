@@ -56,8 +56,6 @@ namespace sprk
 				return "PTR_ADD";
 			case NodeType::REINTERPRET_CAST:
 				return "REINTERPRET_CAST";
-			case NodeType::TRUNCATE_CAST:
-				return "TRUNCATE_CAST";
 			default:
 				return "UNKNOWN";
 		}

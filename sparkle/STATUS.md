@@ -1,4 +1,8 @@
-# ARM64 code generation
+## IR
 
-Current bug:
-- CAS generates `casl` instead of `caslb` variant
+- [X] DCE
+
+## Code generation
+
+- [X] Aarch64
+- [X] RISC-V

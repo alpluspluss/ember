@@ -49,7 +49,6 @@ namespace sprk
 
         /* casting */
         REINTERPRET_CAST,
-        TRUNCATE_CAST,
     };
 
     template<size_t MAX_INPUTS = 4, size_t MAX_USERS = 4>

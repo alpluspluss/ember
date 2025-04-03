@@ -2,7 +2,7 @@
 
 namespace sprk
 {
-	void SproutRegion::add_node(NodeRef node)
+	void SproutRegion::add_node(const NodeRef node)
 	{
 		nodes.push_back(node);
 	}
@@ -14,7 +14,7 @@ namespace sprk
 		child->region_depth = region_depth + 1;
 	}
 
-	void SproutRegion::set_ctrl_deps(NodeRef control)
+	void SproutRegion::set_ctrl_deps(const NodeRef control)
 	{
 		ctrl_dep = control;
 	}
@@ -26,7 +26,7 @@ namespace sprk
 			dom->dom_regions.push_back(shared_from_this());
 	}
 
-	void SproutRegion::set_type(RegionType t, uint32_t id)
+	void SproutRegion::set_type(const RegionType t, const uint32_t id)
 	{
 		type = t;
 		type_id = id;

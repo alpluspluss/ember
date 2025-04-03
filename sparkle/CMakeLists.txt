@@ -2,6 +2,7 @@ project(sparkle LANGUAGES CXX)
 
 add_library(sparkle
         lib/sprout/region.cpp
+        lib/sprout/passes/aa.cpp
         lib/sprout/passes/dce.cpp
         lib/sprout/utils/dump.cpp
 
@@ -58,7 +59,7 @@ target_link_libraries(SparkleCGenAarch64 PRIVATE
         sparkle
 )
 
-### dce analysis & optimization
+### dce optimization
 add_executable(SparkleDCEOptimization
         tests/optimization/dce.cpp
 )
@@ -68,5 +69,18 @@ target_include_directories(SparkleDCEOptimization PRIVATE
 )
 
 target_link_libraries(SparkleDCEOptimization PRIVATE
+        sparkle
+)
+
+### alias analysis
+add_executable(SparkleAliasAnalysis
+        tests/optimization/aa.cpp
+)
+
+target_include_directories(SparkleAliasAnalysis PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleAliasAnalysis PRIVATE
         sparkle
 )

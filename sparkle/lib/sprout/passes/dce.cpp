@@ -136,7 +136,6 @@ namespace sprk
 
 				std::cout << reset << "\n";
 
-				// Print inputs (skipping dead ones)
 				if (node->input_count > 0)
 				{
 					std::cout << indentation << "    inputs: ";
