@@ -21,10 +21,9 @@ namespace sprk
 			remove_dead_functions(root, nodes);
 	}
 
-	void IPOPass::prop_constant(std::vector<std::unique_ptr<SproutNode<> > > &nodes)
+	void IPOPass::prop_constant(const std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		const auto &const_opps = ipa_pass->get_results().const_opps;
-
 		for (const auto &opp: const_opps)
 		{
 			NodeRef param = opp.param;
@@ -79,16 +78,20 @@ namespace sprk
 	                               std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		const auto &inline_opps = ipa_pass->get_results().inline_opps;
-
+		//std::cout << "total inlining opportunities: " << inline_opps.size() << std::endl;
 		for (const auto &opp: inline_opps)
 		{
-			/* skip recursive for now; tailcall later */
+			// std::cout << "considering inlining function #" << opp.callee
+			// 	  << " into function #" << opp.caller
+			// 	  << " at call site #" << opp.call_site
+			// 	  << " (benefit: " << opp.benefit
+			// 	  << ", recursive: " << opp.is_recursive << ")" << std::endl;
 			if (opp.is_recursive)
-				continue;
+				continue; /* note: do tailcall or mark here probably */
 
 			NodeRef caller_fn = opp.caller;
 			NodeRef callee_fn = opp.callee;
-			NodeRef call_site = opp.call_site;
+			const NodeRef call_site = opp.call_site;
 
 			if (caller_fn >= nodes.size() || !nodes[caller_fn] ||
 			    callee_fn >= nodes.size() || !nodes[callee_fn] ||
@@ -99,50 +102,40 @@ namespace sprk
 
 			const auto caller_region = find_function_region(caller_fn, root);
 			const auto callee_region = find_function_region(callee_fn, root);
-
-			if (!caller_region || !callee_region)
-				continue;
-
 			auto call_region = find_node_region(call_site, root);
-			if (!call_region)
+			if (!caller_region || !callee_region || !call_region)
 				continue;
 
+			/* map parameter to args */
 			std::map<NodeRef, NodeRef> param_to_arg;
 			map_params_to_args(callee_fn, call_site, nodes, param_to_arg);
 
-			orig_to_clone.clear();
+			/* inline all nodes */
+			std::vector<NodeRef> inlined_nodes = inline_function_body(callee_region, call_region, nodes);
 
-			if (const auto inlined_region = clone_region(callee_region, call_region, nodes);
-				!inlined_region)
-				continue;
-
-			connect_inlined_nodes(nodes); /* connect the inlined nodes */
-
-			/* replace params with args */
+			/* connect & replace all */
+			connect_inlined_nodes(nodes);
 			for (const auto &[param, arg]: param_to_arg)
 			{
 				if (orig_to_clone.find(param) != orig_to_clone.end())
 				{
-					/* cpy users of the cloned parameter */
-					NodeRef cloned_param = orig_to_clone[param];
+					const NodeRef cloned_param = orig_to_clone[param];
 					std::vector<NodeRef> users;
 					users.reserve(nodes[cloned_param]->user_count);
 					for (uint8_t i = 0; i < nodes[cloned_param]->user_count; i++)
 						users.push_back(nodes[cloned_param]->users[i]);
 
-					/* replace all uses of this parameter with the argument */
-					for (NodeRef user: users)
+					for (const NodeRef user: users)
 					{
 						if (user >= nodes.size() || !nodes[user])
 							continue;
-						/* update user input state */
+
 						for (uint8_t i = 0; i < nodes[user]->input_count; i++)
 						{
 							if (nodes[user]->inputs[i] == cloned_param)
 							{
-								/* update args users */
 								nodes[user]->inputs[i] = arg;
-								if (nodes[arg]->user_count < 4) /* MAX_USER */
+								if (nodes[arg]->user_count < 4)
 									nodes[arg]->users[nodes[arg]->user_count++] = user;
 							}
 						}
@@ -150,16 +143,14 @@ namespace sprk
 				}
 			}
 
-			auto returns = collect_function_returns(callee_fn, nodes);
-			if (!returns.empty())
+			/* find return value and replace call */
+			if (auto returns = collect_function_returns(callee_fn, nodes);
+				!returns.empty())
 			{
-				/* note: handle more complex part; use the first return value for now */
-				NodeRef original_ret = returns[0];
-
-				if (original_ret < nodes.size() && nodes[original_ret] &&
-				    nodes[original_ret]->input_count > 0)
+				if (const NodeRef original_ret = returns[0];
+					original_ret < nodes.size() && nodes[original_ret] &&
+				                                      nodes[original_ret]->input_count > 0)
 				{
-					/* find cloned ret value */
 					if (NodeRef ret_val = nodes[original_ret]->inputs[0];
 						orig_to_clone.find(ret_val) != orig_to_clone.end())
 					{
@@ -175,8 +166,8 @@ namespace sprk
 		}
 	}
 
-	std::shared_ptr<SproutRegion> IPOPass::clone_region(const std::shared_ptr<SproutRegion>& src_region,
-	                                                    const std::shared_ptr<SproutRegion>& dest_parent,
+	std::shared_ptr<SproutRegion> IPOPass::clone_region(const std::shared_ptr<SproutRegion> &src_region,
+	                                                    const std::shared_ptr<SproutRegion> &dest_parent,
 	                                                    std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		if (!src_region || !dest_parent)
@@ -303,24 +294,22 @@ namespace sprk
 			return;
 		}
 
-		/* find which function is being called */
+		nodes_to_remove.insert(call_site);
 		NodeRef called_function = NULL_REF;
 		if (nodes[call_site]->input_count > 0)
 			called_function = nodes[call_site]->inputs[0];
 
-		/* copy users of the call site */
+		/* get all users from the call site */
 		std::vector<NodeRef> call_users;
 		call_users.reserve(nodes[call_site]->user_count);
 		for (uint8_t i = 0; i < nodes[call_site]->user_count; i++)
 			call_users.push_back(nodes[call_site]->users[i]);
 
-		/* replace all uses of the call with the inlined value */
-		for (NodeRef user: call_users)
+		for (const NodeRef user: call_users)
 		{
 			if (user >= nodes.size() || !nodes[user])
 				continue;
 
-			/* update userinput state */
 			for (uint8_t i = 0; i < nodes[user]->input_count; i++)
 			{
 				if (nodes[user]->inputs[i] == call_site)
@@ -352,7 +341,74 @@ namespace sprk
 				functions_to_remove.insert(called_function);
 		}
 
+		for (uint8_t i = 0; i < nodes[call_site]->input_count; i++)
+		{
+			NodeRef input = nodes[call_site]->inputs[i];
+			if (input >= nodes.size() || !nodes[input])
+				continue;
+
+			if (nodes[input]->type == NodeType::CALL_PARAM)
+			{
+				nodes_to_remove.insert(input);
+				for (uint8_t j = 0; j < nodes[input]->input_count; j++)
+				{
+					NodeRef param_input = nodes[input]->inputs[j];
+					if (param_input >= nodes.size() || !nodes[param_input])
+						continue;
+
+					if (nodes[param_input]->type == NodeType::CONST &&
+						nodes[param_input]->user_count == 1)
+					{
+						nodes_to_remove.insert(param_input);
+					}
+				}
+			}
+		}
+
 		/* the call node is now effectively dead; DCE will remove this and all of its input */
+	}
+
+	std::vector<NodeRef> IPOPass::inline_function_body(
+		const std::shared_ptr<SproutRegion> &callee_region,
+		const std::shared_ptr<SproutRegion> &caller_region,
+		std::vector<std::unique_ptr<SproutNode<> > > &nodes)
+	{
+		if (!callee_region || !caller_region)
+			return {};
+
+		std::vector<NodeRef> inlined_nodes;
+		orig_to_clone.clear();
+
+		for (NodeRef node_ref: callee_region->get_nodes())
+		{
+			if (node_ref >= nodes.size() || !nodes[node_ref])
+				continue;
+
+			/* skip boundary nodes */
+			if (nodes[node_ref]->type == NodeType::ENTRY ||
+			    nodes[node_ref]->type == NodeType::EXIT ||
+			    nodes[node_ref]->type == NodeType::FUNCTION)
+			{
+				continue;
+			}
+
+			NodeRef cloned_ref = clone_node(node_ref, nodes, next_node_id);
+			if (cloned_ref == NULL_REF)
+				continue;
+
+			/* save to do direct call later */
+			orig_to_clone[node_ref] = cloned_ref;
+			caller_region->add_node(cloned_ref);
+			inlined_nodes.push_back(cloned_ref);
+		}
+
+		for (const auto &child: callee_region->get_children())
+		{
+			auto child_nodes = inline_function_body(child, caller_region, nodes);
+			inlined_nodes.insert(inlined_nodes.end(), child_nodes.begin(), child_nodes.end());
+		}
+
+		return inlined_nodes;
 	}
 
 	void IPOPass::dump_results(bool colorize)
@@ -371,9 +427,7 @@ namespace sprk
 		else
 		{
 			for (const auto &[caller, callee]: ipo_results.inlined_functions)
-			{
 				std::cout << "  function #" << callee << " inlined into #" << caller << std::endl;
-			}
 			std::cout << "  total calls eliminated: " << ipo_results.removed_calls << std::endl;
 		}
 
@@ -390,48 +444,48 @@ namespace sprk
 		}
 	}
 
-	void IPOPass::remove_dead_functions(const std::shared_ptr<SproutRegion> &root, std::vector<std::unique_ptr<SproutNode<> > > &nodes)
+	void IPOPass::remove_dead_functions(const std::shared_ptr<SproutRegion> &root,
+	                                    std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
-		std::vector<std::shared_ptr<SproutRegion>> regions_to_remove;
+		std::vector<std::shared_ptr<SproutRegion> > regions_to_remove;
 
-		std::function<void(const std::shared_ptr<SproutRegion>&)> find_function_regions =
-			[&](const std::shared_ptr<SproutRegion>& region)
+		std::function<void(const std::shared_ptr<SproutRegion> &)> find_function_regions =
+				[&](const std::shared_ptr<SproutRegion> &region)
 		{
-				if (!region)
-					return;
+			if (!region)
+				return;
 
-				if (region->get_type() == RegionType::FUNCTION)
+			if (region->get_type() == RegionType::FUNCTION)
+			{
+				for (NodeRef node_ref: region->get_nodes())
 				{
-					for (NodeRef node_ref : region->get_nodes())
+					if (node_ref < nodes.size() && nodes[node_ref] &&
+					    nodes[node_ref]->type == NodeType::FUNCTION &&
+					    functions_to_remove.find(node_ref) != functions_to_remove.end())
 					{
-						if (node_ref < nodes.size() && nodes[node_ref] &&
-							nodes[node_ref]->type == NodeType::FUNCTION &&
-							functions_to_remove.find(node_ref) != functions_to_remove.end())
-						{
-							regions_to_remove.push_back(region);
-							break;
-						}
+						regions_to_remove.push_back(region);
+						break;
 					}
 				}
+			}
 
-				for (const auto& child : region->get_children())
-					find_function_regions(child);
+			for (const auto &child: region->get_children())
+				find_function_regions(child);
 		};
 
 		find_function_regions(root);
-		for (const auto& region : regions_to_remove)
+		for (const auto &region: regions_to_remove)
 		{
 			std::shared_ptr<SproutRegion> parent = region->get_parent();
 			if (!parent)
 				continue;
 
 			parent->remove_child(region);
-			for (NodeRef node_ref : region->get_nodes())
+			for (NodeRef node_ref: region->get_nodes())
 			{
 				if (node_ref < nodes.size() && nodes[node_ref])
 					nodes[node_ref].reset();
 			}
 		}
 	}
-
 }

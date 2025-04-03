@@ -79,8 +79,7 @@ namespace sprk
         SproutNode& operator=(SproutNode&&) = default;
     };
 
-    
-    static_assert(std::is_standard_layout<SproutNode<>>::value, "SproutNode must have standard layout");
-    static_assert(std::is_move_constructible<SproutNode<>>::value, "SproutNode must be move constructible");
+    static_assert(std::is_standard_layout_v<SproutNode<>>, "SproutNode must have standard layout");
+    static_assert(std::is_move_constructible_v<SproutNode<>>, "SproutNode must be move constructible");
 }
 

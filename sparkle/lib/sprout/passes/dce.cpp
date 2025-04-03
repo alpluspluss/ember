@@ -59,10 +59,12 @@ namespace sprk
 			if (nodes[i] && alive_nodes.find(static_cast<NodeRef>(i)) == alive_nodes.end())
 				dead_nodes.insert(static_cast<NodeRef>(i));
 		}
+
+		// remove_dead_nodes(const_cast<std::shared_ptr<SproutRegion> &>(root), nodes);
 	}
 
 	void DCEPass::remove_dead_nodes(std::shared_ptr<SproutRegion> &root,
-	                                std::vector<std::unique_ptr<SproutNode<> > > &nodes)
+									std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		if (dead_nodes.empty())
 			return;
@@ -99,22 +101,22 @@ namespace sprk
 
 		std::function<void(std::shared_ptr<SproutRegion> &)> clean_region =
 				[&](const std::shared_ptr<SproutRegion> &region)
-		{
-			if (!region)
-				return;
+				{
+					if (!region)
+						return;
 
-			std::vector<NodeRef> live_nodes;
-			for (NodeRef node_ref: region->get_nodes())
-			{
-				if (dead_nodes.find(node_ref) == dead_nodes.end())
-					live_nodes.push_back(node_ref);
-			}
+					std::vector<NodeRef> live_nodes;
+					for (NodeRef node_ref: region->get_nodes())
+					{
+						if (dead_nodes.find(node_ref) == dead_nodes.end())
+							live_nodes.push_back(node_ref);
+					}
 
 
-			region->replace_nodes(std::move(live_nodes));
-			for (auto child: region->get_children()) /* `get_children()` already returns references */
-				clean_region(child);
-		};
+					region->replace_nodes(std::move(live_nodes));
+					for (auto child: region->get_children()) /* `get_children()` already returns references */
+						clean_region(child);
+				};
 
 		clean_region(root);
 		for (const NodeRef dead_ref: dead_nodes)
@@ -134,7 +136,7 @@ namespace sprk
 		const char *live_color = colorize ? GREEN : "";
 		const char *reset = colorize ? RESET : "";
 
-		std::cout << header_color << "DCE results" << reset << "\n";
+		std::cout << header_color << "\nDCE results" << reset << "\n";
 		std::cout << "found " << dead_nodes.size() << " dead nodes:" << "\n";
 
 		for (const NodeRef node_ref: dead_nodes)
@@ -165,7 +167,7 @@ namespace sprk
 			if (!region)
 				return;
 
-			std::string indentation(indent * 2, ' ');
+			const std::string indentation(indent * 2, ' ');
 			std::cout << indentation << "region: " << region->get_name()
 					<< " (" << rttostr(region->get_type()) << ")" << "\n";
 
@@ -202,11 +204,11 @@ namespace sprk
 				if (node->input_count > 0)
 				{
 					std::cout << indentation << "    inputs: ";
-					bool first = true;
+					auto first = true;
 					for (uint8_t i = 0; i < node->input_count; i++)
 					{
-						NodeRef input = node->inputs[i];
-						if (dead_nodes.find(input) == dead_nodes.end())
+						if (NodeRef input = node->inputs[i];
+							dead_nodes.find(input) == dead_nodes.end())
 						{
 							if (!first)
 								std::cout << ", ";
@@ -239,7 +241,6 @@ namespace sprk
 			for (const auto &child: region->get_children())
 				dump_region(child, indent + 1);
 		};
-
 		dump_region(root, 0);
 	}
 }

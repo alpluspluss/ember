@@ -75,7 +75,7 @@ void test_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	const auto main_fn_reg = std::make_shared<SproutRegion>("main_function");
 	main_fn_reg->set_type(RegionType::FUNCTION);
 
-	auto square_fn_reg = std::make_shared<SproutRegion>("square_function");
+	const auto square_fn_reg = std::make_shared<SproutRegion>("square_function");
 	square_fn_reg->set_type(RegionType::FUNCTION);
 
 	auto cube_fn_reg = std::make_shared<SproutRegion>("cube_function");
@@ -126,11 +126,10 @@ void test_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	cube_fn_reg->add_node(cube_mul);
 	set_fn_ref(nodes, cube_mul, cube_fn);
 
-	NodeRef cube_ret = make_node(nodes, NodeType::RET, "cube_return", { cube_mul });
+	const NodeRef cube_ret = make_node(nodes, NodeType::RET, "cube_return", { cube_mul });
 	cube_fn_reg->add_node(cube_ret);
 	set_fn_ref(nodes, cube_ret, cube_fn);
 
-	// Main function
 	NodeRef main_fn = make_node(nodes, NodeType::FUNCTION, "main");
 	main_fn_reg->add_node(main_fn);
 

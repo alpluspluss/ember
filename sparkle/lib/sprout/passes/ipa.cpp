@@ -17,15 +17,15 @@ namespace sprk
 
 	void IPAPass::build_call_graph(const std::vector<std::unique_ptr<SproutNode<>>>& nodes)
 	{
-		for (size_t i = 0; i < nodes.size(); ++i)
+		for (const auto& node : nodes)
 		{
-			if (!nodes[i] || nodes[i]->type != NodeType::CALL)
+			if (!node || node->type != NodeType::CALL)
 				continue;
 
-			if (nodes[i]->input_count > 0) /* find the function being called */
+			if (node->input_count > 0) /* find the function being called */
 			{
-				NodeRef caller_fn = nodes[i]->fn_ref;
-				NodeRef callee_fn = nodes[i]->inputs[0];
+				NodeRef caller_fn = node->fn_ref;
+				NodeRef callee_fn = node->inputs[0];
 
 				if (caller_fn != NULL_REF && callee_fn != NULL_REF)
 					ipa_results.call_graph[caller_fn].push_back(callee_fn);
@@ -35,9 +35,8 @@ namespace sprk
 
 	void IPAPass::analyze_function_purity(const std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
-		std::unordered_set<NodeRef> potential;
-
 		/* 1st pass: analyze all fn nodes */
+		std::unordered_set<NodeRef> potential;
 		for (size_t i = 0; i < nodes.size(); ++i)
 		{
 			if (!nodes[i] || nodes[i]->type != NodeType::FUNCTION)
@@ -46,15 +45,15 @@ namespace sprk
 		}
 
 		/* 2nd pass: check impurity */
-		for (size_t i = 0; i < nodes.size(); ++i)
+		for (const auto& node : nodes)
 		{
-			if (!nodes[i])
+			if (!node)
 				continue;
 
 			/* if this is pure */
-			if (!is_pure_node(nodes[i].get()))
+			if (!is_pure_node(node.get()))
 			{
-				NodeRef fn = nodes[i]->fn_ref;
+				NodeRef fn = node->fn_ref;
 				potential.erase(fn);
 			}
 		}
@@ -73,10 +72,10 @@ namespace sprk
 			/* if it is a literal/constant */
 			if (nodes[i]->input_count == 2)
 			{
-				NodeRef constant = nodes[i]->inputs[1];
-				if (nodes[constant] && nodes[constant]->type == NodeType::CONST)
+				if (NodeRef constant = nodes[i]->inputs[1];
+					nodes[constant] && nodes[constant]->type == NodeType::CONST)
 				{
-					IPAResult::ConstPropOpp opp;
+					IPAResult::ConstPropOpp opp = {};
 					opp.function = nodes[i]->fn_ref;
 					opp.param = i;
 					opp.const_val = constant;
@@ -86,12 +85,11 @@ namespace sprk
 		}
 	}
 
-
 	void IPAPass::find_inline_opp(const std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		for (const auto& [caller, callees] : ipa_results.call_graph)
 		{
-			for (NodeRef calle2 : callees)
+			for (const NodeRef calle2 : callees)
 			{
 				const bool is_recursive = (caller == calle2);
 				for (size_t i = 0; i < nodes.size(); ++i)
@@ -114,12 +112,28 @@ namespace sprk
 				}
 			}
 		}
+
 		std::sort(ipa_results.inline_opps.begin(),
-				  ipa_results.inline_opps.end(),
-				  [](const IPAResult::InlineOpp& a, const IPAResult::InlineOpp& b)
-				  {
-					  return a.benefit > b.benefit;
-				  });
+			  ipa_results.inline_opps.end(),
+			  [&nodes](const IPAResult::InlineOpp& a, const IPAResult::InlineOpp& b)
+			  {
+				  const auto size_a = std::count_if(nodes.begin(), nodes.end(),
+					  [&](const auto& node)
+					  {
+						  return node && node->fn_ref == a.callee;
+					  });
+				  const auto size_b = std::count_if(nodes.begin(), nodes.end(),
+					  [&](const auto& node)
+					  {
+						  return node && node->fn_ref == b.callee;
+					  });
+
+				  if (size_a != size_b)
+					  return size_a > size_b;
+
+			  	  /* benefit-based if the sizes are the same */
+				  return a.benefit > b.benefit;
+			  });
 	}
 
 	bool IPAPass::is_pure_node(const SproutNode<> *node) const
@@ -141,25 +155,53 @@ namespace sprk
 	uint16_t IPAPass::compute_inlining_benefit(const NodeRef callee, const std::vector<std::unique_ptr<SproutNode<> > > &nodes) const
 	{
 		auto benefit = 0;
-		auto size = 0;
-		for (const auto& node : nodes)
+		auto size = std::count_if(nodes.begin(), nodes.end(),
+			[callee](const auto& node)
+			{
+				return node && node->fn_ref == callee;
+			});
+
+		if (size > 50)
+			return 0;
+
+		/*
+		 * call graph dependency based inlining selection
+		 * 1. inline the leaf functions
+		 *	 that don't call other functions are great for
+		 *	 inlining since they won't require further inlining
+		 *
+		 * 2. functions that are called by many other functions
+		 *	 solely because we can do more DCE and other optimizations later
+		 *
+		 * 3. functions that call other functions
+		 *   so inlining a function that itself contains calls is possible
+		 */
+
+		const bool is_leaf = (ipa_results.call_graph.find(callee) == ipa_results.call_graph.end() ||
+				   ipa_results.call_graph.at(callee).empty());
+		if (is_leaf)
+			benefit += 10;
+
+		auto num_callers = 0;
+		for (const auto& [caller, callees] : ipa_results.call_graph)
 		{
-			if (node && node->fn_ref == callee)
-				size++;
+			for (NodeRef called : callees)
+			{
+				if (called == callee)
+					num_callers++;
+			}
+		}
+		benefit += std::min(num_callers * 2, 10); /* cap at +10 */
+
+		if (ipa_results.call_graph.find(callee) != ipa_results.call_graph.end())
+		{
+			const size_t num_callees = ipa_results.call_graph.at(callee).size();
+			benefit += std::min(num_callees * 3, 15UL); /* cap at + 15 */
 		}
 
-		/* heuristic cost */
-		if (size < 5)
-		{
-			benefit += 10; /* most preferred */
-		}
-		else if (size < 20)
-		{
-			benefit += 5; /* we like small fns */
-		}
-		
-		if (ipa_results.pure_fns.count(callee)) /* if it's pure */
-			benefit += 3;
+		/* NOTE: more factors down here */
+		if (ipa_results.pure_fns.count(callee))
+			benefit += 5;
 
 		return benefit;
 	}
@@ -197,7 +239,7 @@ namespace sprk
 		std::cout << blue << "\ninlining opportunities:" << reset << std::endl;
 		for (const auto&[caller, callee, call_site, benefit, is_recursive] : ipa_results.inline_opps)
 		{
-			std::cout << "  Inline function #" << callee
+			std::cout << "  inline function #" << callee
 					  << " into function #" << caller
 					  << " at call site #" << call_site
 					  << " (benefit: " << benefit << ")"

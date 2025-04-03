@@ -160,8 +160,17 @@ namespace sprk
 		const char *header_color = colorize ? BLUE : "";
 		const char *reset = colorize ? RESET : "";
 
+		/* get the size; nulls do not count */
+		uint32_t c = 0;
+		for (auto& n : nodes)
+		{
+			if (n == nullptr)
+				continue;
+			c++;
+		}
+
 		std::cout << header_color << "Sprout IR dump:" << reset << "\n";
-		std::cout << header_color << "-> nodes: " << nodes.size() << reset << "\n";
+		std::cout << header_color << "-> nodes: " << c << reset << "\n";
 
 		dump_region(root_region, nodes, 0, colorize);
 	}

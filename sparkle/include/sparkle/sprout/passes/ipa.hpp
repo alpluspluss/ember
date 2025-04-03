@@ -22,9 +22,9 @@ namespace sprk
 		/* inlining opportinities */
 		struct InlineOpp
 		{
-			NodeRef caller;
-			NodeRef callee;
-			NodeRef call_site;
+			NodeRef caller = {};
+			NodeRef callee = {};
+			NodeRef call_site = {};
 			uint16_t benefit = 0;
 			bool is_recursive = false; /* for tail call or smth */
 		};
@@ -64,6 +64,7 @@ namespace sprk
 		/* utils */
 		bool is_pure_node(const SproutNode<>* node) const;
 
-		uint16_t compute_inlining_benefit(NodeRef callee, const std::vector<std::unique_ptr<SproutNode<>>>& nodes) const;
+		[[nodiscard]] uint16_t compute_inlining_benefit(NodeRef callee,
+			const std::vector<std::unique_ptr<SproutNode<>>>& nodes) const;
 	};
 }
