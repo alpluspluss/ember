@@ -1,6 +1,10 @@
 project(sparkle LANGUAGES CXX)
 
 add_library(sparkle
+        lib/sprout/region.cpp
+        lib/sprout/passes/dce.cpp
+        lib/sprout/utils/dump.cpp
+
         # aarch64 codegen backend
         lib/target/aarch64/common.cpp
         lib/target/aarch64/encoder/arith.cpp
@@ -39,6 +43,9 @@ target_include_directories(sparkle PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+
+# tests
+### mc codegen aarch64
 add_executable(SparkleCGenAarch64
         tests/mcodegen/aarch64.cpp
 )
@@ -48,5 +55,18 @@ target_include_directories(SparkleCGenAarch64 PRIVATE
 )
 
 target_link_libraries(SparkleCGenAarch64 PRIVATE
+        sparkle
+)
+
+### dce analysis & optimization
+add_executable(SparkleDCEOptimization
+        tests/optimization/dce.cpp
+)
+
+target_include_directories(SparkleDCEOptimization PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleDCEOptimization PRIVATE
         sparkle
 )

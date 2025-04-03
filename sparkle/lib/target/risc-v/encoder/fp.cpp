@@ -1,5 +1,3 @@
-#pragma once
-
 #include <sparkle/target/risc-v/encoding/fp.hpp>
 
 namespace sprk::riscv 
