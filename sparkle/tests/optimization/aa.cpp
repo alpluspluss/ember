@@ -34,7 +34,7 @@ NodeRef make_node(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	return id;
 }
 
-void set_const(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
+void set_const(const std::vector<std::unique_ptr<SproutNode<> > > &nodes,
                const NodeRef node_ref,
                int64_t value)
 {

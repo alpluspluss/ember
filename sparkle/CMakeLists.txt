@@ -4,6 +4,7 @@ add_library(sparkle
         lib/sprout/region.cpp
         lib/sprout/passes/aa.cpp
         lib/sprout/passes/dce.cpp
+        lib/sprout/passes/ipa.cpp
         lib/sprout/utils/dump.cpp
 
         # aarch64 codegen backend
@@ -32,11 +33,11 @@ add_library(sparkle
         lib/target/risc-v/encoder/cmp.cpp
         lib/target/risc-v/encoder/data.cpp
         lib/target/risc-v/encoder/fp.cpp
-        lib/target/risc-v/encoder/logical.cpp 
+        lib/target/risc-v/encoder/logical.cpp
         lib/target/risc-v/encoder/memory.cpp
-        lib/target/risc-v/encoder/mul.cpp 
-        lib/target/risc-v/encoder/shift.cpp 
-        lib/target/risc-v/encoder/simd.cpp 
+        lib/target/risc-v/encoder/mul.cpp
+        lib/target/risc-v/encoder/shift.cpp
+        lib/target/risc-v/encoder/simd.cpp
         lib/target/risc-v/encoder/system.cpp
 )
 
@@ -82,5 +83,18 @@ target_include_directories(SparkleAliasAnalysis PRIVATE
 )
 
 target_link_libraries(SparkleAliasAnalysis PRIVATE
+        sparkle
+)
+
+### inter-prcedural analysis
+add_executable(SparkleIPA
+        tests/optimization/ipa.cpp
+)
+
+target_include_directories(SparkleIPA PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleIPA PRIVATE
         sparkle
 )

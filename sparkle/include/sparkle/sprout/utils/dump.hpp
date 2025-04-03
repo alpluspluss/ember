@@ -29,7 +29,7 @@ namespace sprk
 
 		const char *color = colorize ? get_color_for_node(node) : "";
 		const char *reset = colorize ? RESET : "";
-		ss << color << "Node #" << node.id << ": " << nttostr(node.type);
+		ss << color << "node #" << node.id << ": " << nttostr(node.type);
 
 		if (node.string_id)
 			ss << " (name: " << node.string_id << ")";
@@ -52,7 +52,7 @@ namespace sprk
 
 		if (node.input_count > 0)
 		{
-			ss << "\n  Inputs: ";
+			ss << "\n  inputs: ";
 			for (uint8_t i = 0; i < node.input_count; ++i)
 			{
 				if (i > 0)
@@ -63,7 +63,7 @@ namespace sprk
 
 		if (node.user_count > 0)
 		{
-			ss << "\n  Users: ";
+			ss << "\n  users: ";
 			for (uint8_t i = 0; i < node.user_count; ++i)
 			{
 				if (i > 0)

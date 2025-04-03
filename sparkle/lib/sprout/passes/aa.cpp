@@ -90,7 +90,7 @@ namespace sprk
 
 		/* pass 3: propagate p2info */
 		/* note: this is a fixed-point algorithm; improve later ig */
-		bool changed = true;
+		auto changed = true;
 		while (changed)
 		{
 			changed = false;
@@ -198,7 +198,6 @@ namespace sprk
 	                                                        const std::vector<std::unique_ptr<SproutNode<> > > &nodes)
 	{
 		/* currently assumes the IR is roughly in topological order */
-		/* TODO: Khan's topo sort algorithm */
 		std::vector<NodeRef> result = operations;
 		std::sort(result.begin(), result.end());
 		return result;

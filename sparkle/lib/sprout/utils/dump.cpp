@@ -57,7 +57,7 @@ namespace sprk
 			case NodeType::REINTERPRET_CAST:
 				return "REINTERPRET_CAST";
 			default:
-				return "UNKNOWN";
+				return "<unknown node type>";
 		}
 	}
 
@@ -80,7 +80,7 @@ namespace sprk
 			case RegionType::EXCEPTION:
 				return "EXCEPTION";
 			default:
-				return "UNKNOWN";
+				return "<unknown region type>";
 		}
 	}
 

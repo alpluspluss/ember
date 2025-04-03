@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <sparkle/sprout/node.hpp>
 #include <sparkle/sprout/region.hpp>
 #include <sparkle/sprout/passes/pass.hpp>
