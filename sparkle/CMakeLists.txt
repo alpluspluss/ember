@@ -1,16 +1,16 @@
 project(sparkle LANGUAGES CXX)
 
 add_library(sparkle
-        lib/sprout/region.cpp
-        lib/sprout/passes/aa.cpp
-        lib/sprout/passes/dce.cpp
-        lib/sprout/passes/ipa.cpp
-        lib/sprout/passes/ipo.cpp
-        lib/sprout/passes/pre.cpp
-        lib/sprout/utils/dump.cpp
+        # lib/sprout/region.cpp
+        # lib/sprout/passes/aa.cpp
+        # lib/sprout/passes/dce.cpp
+        # lib/sprout/passes/ipa.cpp
+        # lib/sprout/passes/ipo.cpp
+        # lib/sprout/passes/pre.cpp
+        # lib/sprout/utils/dump.cpp
 
-        lib/sprout/utils/irutils.cpp
-        lib/sprout/utils/printer.cpp
+        # lib/sprout/utils/irutils.cpp
+        # lib/sprout/utils/printer.cpp
 
         # aarch64 codegen backend
         lib/target/aarch64/common.cpp
