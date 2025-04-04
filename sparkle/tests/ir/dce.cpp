@@ -1,6 +1,6 @@
 #include <iostream>
-#include <sparkle/sprout/passes/dce.hpp>
-#include <sparkle/sprout/utils/dump.hpp>
+#include <sparkle/ir/passes/dce.hpp>
+#include <sparkle/ir/utils/irdump.hpp>
 
 using namespace sprk;
 
@@ -18,7 +18,7 @@ NodeRef make_node(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	node->user_count = 0;
 
 	if (!name.empty())
-		node->string_id = reinterpret_cast<uint64_t>(strdup(name.c_str()));
+		node->str_id = reinterpret_cast<uint64_t>(strdup(name.c_str()));
 
 	for (const NodeRef input: inputs)
 	{
@@ -78,11 +78,11 @@ void create_test_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	entry_reg->add_node(param_a);
 	entry_reg->add_node(param_b);
 
-	NodeRef const10 = make_node(nodes, NodeType::CONST, "const10");
+	NodeRef const10 = make_node(nodes, NodeType::LIT, "const10");
 	set_const(nodes, const10, 10);
 	entry_reg->add_node(const10);
 
-	NodeRef const20 = make_node(nodes, NodeType::CONST, "const20");
+	NodeRef const20 = make_node(nodes, NodeType::LIT, "const20");
 	set_const(nodes, const20, 20);
 	entry_reg->add_node(const20);
 
@@ -119,10 +119,10 @@ void create_br_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	cond_reg->set_type(RegionType::BASIC_BLOCK);
 
 	const auto then_reg = std::make_shared<SproutRegion>("then_br");
-	then_reg->set_type(RegionType::BRANCH_THEN);
+	then_reg->set_type(RegionType::BR_THEN);
 
 	const auto else_reg = std::make_shared<SproutRegion>("else_br");
-	else_reg->set_type(RegionType::BRANCH_ELSE);
+	else_reg->set_type(RegionType::BR_ELSE);
 
 	const auto exit_reg = std::make_shared<SproutRegion>("exit");
 	exit_reg->set_type(RegionType::BASIC_BLOCK);
@@ -143,18 +143,18 @@ void create_br_ir(std::vector<std::unique_ptr<SproutNode<> > > &nodes,
 	entry_reg->add_node(param_b);
 
 	/* lits */
-	NodeRef const10 = make_node(nodes, NodeType::CONST, "const10");
+	NodeRef const10 = make_node(nodes, NodeType::LIT, "const10");
 	set_const(nodes, const10, 10);
-	NodeRef const20 = make_node(nodes, NodeType::CONST, "const20");
+	NodeRef const20 = make_node(nodes, NodeType::LIT, "const20");
 	set_const(nodes, const20, 20);
-	NodeRef const30 = make_node(nodes, NodeType::CONST, "const30");
+	NodeRef const30 = make_node(nodes, NodeType::LIT, "const30");
 	set_const(nodes, const30, 30);
 	entry_reg->add_node(const10);
 	entry_reg->add_node(const20);
 	entry_reg->add_node(const30);
 
 	/* cond: a > b */
-	NodeRef condition = make_node(nodes, NodeType::CMP, "a_gt_b", { param_a, param_b });
+	NodeRef condition = make_node(nodes, NodeType::GT, "a_gt_b", { param_a, param_b });
 	cond_reg->add_node(condition);
 
 	/* br */
