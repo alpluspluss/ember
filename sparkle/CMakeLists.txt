@@ -2,8 +2,9 @@ project(sparkle LANGUAGES CXX)
 
 add_library(sparkle
         lib/ir/obj/region.cpp
-        lib/ir/pass/dce.cpp
-        lib/ir/pass/manager.cpp
+        lib/ir/passes/aa.cpp
+        lib/ir/passes/dce.cpp
+        lib/ir/passes/manager.cpp
         lib/ir/utils/irdump.cpp
 
         # aarch64 codegen backend
@@ -59,7 +60,7 @@ target_link_libraries(SparkleCGenAarch64 PRIVATE
         sparkle
 )
 
-# ir
+# dce
 add_executable(SparkleDCE
         tests/ir/dce.cpp
 )
@@ -69,5 +70,17 @@ target_include_directories(SparkleDCE PRIVATE
 )
 
 target_link_libraries(SparkleDCE PRIVATE
+        sparkle
+)
+# aa
+add_executable(SparkleAA
+        tests/ir/aa.cpp
+)
+
+target_include_directories(SparkleAA PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(SparkleAA PRIVATE
         sparkle
 )

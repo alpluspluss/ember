@@ -204,7 +204,7 @@ int main()
 	dce1.run(root1, nodes1);
 
 	std::cout << "after DCE optimization 1: \n";
-	dce1.dump_results(dce1.get_dead_nodes(), nodes1, root1);
+	DCEPass::dump_results(dce1.get_dead_nodes(), nodes1, root1);
 
 	/********/
 
@@ -221,7 +221,7 @@ int main()
 	dce2.run(root2, nodes2);
 
 	std::cout << "after DCE optimization 1: \n";
-	dce2.dump_results(dce2.get_dead_nodes(), nodes2, root2);
+	DCEPass::dump_results(dce2.get_dead_nodes(), nodes2, root2);
 
 	return 0;
 }
